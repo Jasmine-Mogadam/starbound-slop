@@ -14,7 +14,7 @@ RUN useradd -m -s /bin/bash steam && \
 COPY --chown=steam:steam .build/server/ /opt/starbound/
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 21025/udp
 
