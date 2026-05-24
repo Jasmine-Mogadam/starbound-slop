@@ -1,0 +1,11 @@
+{
+  "name": "starbound-deploy",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "prepare-build": "node scripts/prepare.js",
+    "start": "npm run prepare-build && docker build --platform linux/amd64 -t starbound-dedicated:latest . && docker run --rm --platform linux/amd64 --name starbound-local -p 21025:21025/udp starbound-dedicated:latest",
+    "deploy": "npm run prepare-build && flyctl deploy",
+    "stop": "docker stop starbound-local || true && docker rm -f starbound-local || true"
+  }
+}
