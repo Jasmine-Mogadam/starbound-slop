@@ -2,22 +2,26 @@
 
 Dockerized Starbound dedicated server, deployable to [fly.io](https://fly.io).
 
-> **Platform note:** The Starbound dedicated server binary is Linux/Windows only. You need a Linux or Windows machine with Starbound installed to build and deploy this.
+> **Platform note:** The Starbound dedicated server binary is Linux/Windows only. You need a Linux or Windows machine to build and deploy this.
 
 ## Setup
 
-### 1. Point to your Starbound install
+### 1. Install Starbound Dedicated Server
+
+In Steam, go to **Library → Tools** and install **Starbound Dedicated Server**. It's free if you own Starbound.
+
+### 2. Point to your install
 
 ```sh
 cp config.example.json config.json
 ```
 
-Edit `config.json` with the paths to your local Starbound install:
+Edit `config.json`:
 
 ```json
 {
-  "starboundPath": "C:/Program Files (x86)/Steam/steamapps/common/Starbound",
-  "workshopPath": "C:/Program Files (x86)/Steam/steamapps/workshop/content/211820"
+  "starboundPath": "C:/Program Files (x86)/Steam/steamapps/common/Starbound Dedicated Server",
+  "workshopPath": "C:/Program Files (x86)/Steam/steamapps/workshop/content/241100"
 }
 ```
 
