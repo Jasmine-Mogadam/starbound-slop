@@ -1,0 +1,24 @@
+services:
+  starbound:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: starbound-server:local
+    container_name: starbound
+    platform: linux/amd64
+    volumes:
+      - ./starbound-server-files:/opt/starbound/storage/game
+    ports:
+      - "21025:21025"
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.15
+    container_name: playit
+    environment:
+      - PLAYIT_SECRET=${PLAYIT_SECRET}
+    restart: unless-stopped
+    depends_on:
+      - starbound

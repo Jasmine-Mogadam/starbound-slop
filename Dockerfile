@@ -7,9 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     lib32gcc-s1 libstdc++6 libcurl4 zlib1g ca-certificates python3 procps \
     && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/bash steam && \
-    mkdir -p "$STARBOUND_DIR" && \
-    chown steam:steam "$STARBOUND_DIR"
+RUN mkdir -p "$STARBOUND_DIR"
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY scripts/status_server.py /usr/local/bin/status_server.py
@@ -17,7 +15,5 @@ RUN sed -i 's/\r//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entr
 
 EXPOSE 21025/tcp
 EXPOSE 8080/tcp
-
-USER steam
 
 CMD ["/usr/local/bin/entrypoint.sh"]
