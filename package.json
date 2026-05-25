@@ -3,9 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node scripts/prepare.js",
-    "start": "npm run build && docker build --platform linux/amd64 -t starbound-dedicated:latest . && docker run --rm --platform linux/amd64 --name starbound-local -p 21025:21025/udp starbound-dedicated:latest",
-    "deploy": "npm run build && flyctl deploy",
-    "stop": "docker stop starbound-local || true && docker rm -f starbound-local || true"
+    "start": "node scripts/start.js",
+    "docker:build": "docker build --platform linux/amd64 -t starbound-dedicated:latest .",
+    "docker:run": "docker run -d --platform linux/amd64 --name starbound-local -p 21025:21025/tcp -v starbound-data:/opt/starbound --env-file .env starbound-dedicated:latest",
+    "docker": "npm run docker:build && npm run docker:run",
+    "logs": "docker logs -f starbound-local",
+    "stop": "docker stop starbound-local 2>/dev/null; docker rm -f starbound-local 2>/dev/null; true",
+    "setup": "flyctl apps create starbound-server && flyctl volumes create starbound_data --size 10 --region ord --yes",
+    "build": "node scripts/build.js",
+    "mods": "node scripts/mods.js",
+    "deploy": "node scripts/deploy.js",
+    "status": "flyctl status",
+    "logs:fly": "flyctl logs",
+    "ssh": "flyctl ssh console",
+    "destroy": "flyctl apps destroy starbound-server"
   }
 }

@@ -1,7 +1,11 @@
 .git
 node_modules
-scripts
 config*.json
 *.md
 .gitignore
 .gitattributes
+.env*
+.build/
+Dockerfile.steamcmd
+starbound-server-files/
+game.tar.gz

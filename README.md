@@ -2,30 +2,69 @@
 
 Dockerized Starbound dedicated server, deployable to [fly.io](https://fly.io).
 
-> **Platform note:** The Starbound dedicated server binary is Linux/Windows only. You need a Linux or Windows machine to build and deploy this.
+Uses SteamCMD inside the container to download the Linux server binaries at startup — no need to copy files off your Mac. Requires owning Starbound on Steam.
 
-## Setup
+## Architecture note (Apple Silicon)
 
-### 1. Install Starbound Dedicated Server
+Starbound and SteamCMD are x86_64 only. The Dockerfile pins `--platform linux/amd64` so Docker Desktop on M1/M2/M3/M4 Macs automatically emulates an Intel environment via Rosetta/QEMU.
 
-In Steam, go to **Library → Tools** and install **Starbound Dedicated Server**. It's free if you own Starbound.
+## Local setup
 
-### 2. Point to your install
+### 1. Set your Steam credentials
 
 ```sh
-cp config.example.json config.json
+cp .env.example .env
 ```
 
-Edit `config.json`:
+Edit `.env` with your Steam username and password. If you have Steam Guard (2FA) enabled, add your current code too — it expires in ~30 seconds so do this right before running.
 
-```json
-{
-  "starboundPath": "C:/Program Files (x86)/Steam/steamapps/common/Starbound Dedicated Server",
-  "workshopPath": "C:/Program Files (x86)/Steam/steamapps/workshop/content/241100"
-}
+```
+STEAM_USER=your_steam_username
+STEAM_PASS=your_steam_password
+STEAM_GUARD=123456
 ```
 
-`workshopPath` is optional — omit it if you have no workshop mods. All mods in that folder will be included automatically.
+### 2. Build the image
+
+```sh
+npm run docker:build
+```
+
+This builds once. You only need to rebuild if the Dockerfile or entrypoint changes.
+
+### 3. Run the server
+
+```sh
+npm run docker:run
+```
+
+On first run, SteamCMD downloads Starbound (~4 GB) into a named Docker volume (`starbound-data`). Subsequent starts validate and diff against what's cached — much faster.
+
+**Shortcut:** `npm run docker` builds and runs in one step.
+
+### Other commands
+
+```sh
+npm run logs   # tail container output
+npm run stop   # stop and remove the local container
+npm start      # run the server natively on macOS (no Docker, uses your local Starbound install)
+```
+
+Connect from your Starbound client at `localhost:21025`.
+
+## fly.io deployment
+
+### 1. Set secrets
+
+```sh
+flyctl secrets set STEAM_USER=your_username STEAM_PASS=your_password
+```
+
+If Steam Guard is active, set it immediately before deploying:
+
+```sh
+flyctl secrets set STEAM_GUARD=123456
+```
 
 ### 2. Deploy
 
@@ -33,18 +72,53 @@ Edit `config.json`:
 npm run deploy
 ```
 
-This copies the server files into `.build/`, builds the Docker image with them baked in, and deploys to fly.io. Game saves persist in a fly.io volume across deploys.
+The fly.io volume (`starbound_data`) persists the Starbound install and saves across deploys. First deploy downloads everything; subsequent deploys are fast.
 
-### Local run
+After the first successful deploy, you can unset `STEAM_GUARD`:
 
 ```sh
-npm start
+flyctl secrets unset STEAM_GUARD
 ```
 
-Same as deploy but runs locally via Docker. Requires Docker Desktop.
+### Connecting to the server
+
+Find your server address and port:
+
+```sh
+npm run status
+```
+
+Look for the **IP address** in the output (or use the dedicated IPv4 allocated during first deploy). The port is always **21025**.
+
+In Starbound: **Multiplayer → Connect** and enter:
+- **Address:** your fly.io IP or `starbound-server.fly.dev`
+- **Port:** `21025`
+- **Account / Password:** leave blank (see below)
+
+### Optional: set a server password
+
+By default the server has no password — anyone with the address can join. To add one:
+
+```sh
+npm run ssh
+```
+
+Then inside the machine:
+
+```sh
+nano /opt/starbound/storage/universe_server.config
+```
+
+Add or update:
+
+```json
+"serverPassword" : "yourpassword"
+```
+
+Save and redeploy (`npm run deploy`) or restart the machine (`flyctl machine restart`) to apply. Players enter this password in the Starbound connect dialog.
 
 ## How it works
 
-`npm run deploy` (and `npm start`) runs `scripts/prepare.js` first, which copies `linux64/`, `assets/`, and any mods from your local install into `.build/server/`. The Dockerfile then bakes those files directly into the image — no Steam login or runtime downloads needed.
+The Dockerfile installs SteamCMD into the image at build time. At container startup, `entrypoint.sh` runs `steamcmd.sh +app_update 211820 validate` to download or update Starbound, then launches `linux64/starbound_server`. The named volume at `/opt/starbound` caches the install so the download only happens in full once.
 
-Save data lives in `/opt/starbound/storage/`, which is mounted to a persistent fly.io volume so it survives redeploys.
+Save data lives in `/opt/starbound/storage/` inside the same volume.

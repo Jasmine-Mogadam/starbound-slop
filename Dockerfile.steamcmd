@@ -1,0 +1,18 @@
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl ca-certificates unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG TARGETARCH
+RUN case "${TARGETARCH}" in \
+      "arm64") DDARCH="linux-arm64" ;; \
+      *)       DDARCH="linux-x64"   ;; \
+    esac && \
+    curl -fsSL "https://github.com/SteamRE/DepotDownloader/releases/download/DepotDownloader_2.7.4/DepotDownloader-${DDARCH}.zip" \
+    -o /tmp/dd.zip && \
+    unzip /tmp/dd.zip -d /usr/local/bin && \
+    chmod +x /usr/local/bin/DepotDownloader && \
+    rm /tmp/dd.zip
+
+ENTRYPOINT ["/usr/local/bin/DepotDownloader"]
