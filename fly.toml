@@ -11,9 +11,9 @@ kill_timeout = 5
   destination = "/opt/starbound/storage"
 
 [vm]
-  cpu_kind = "shared"
-  cpus = 4
-  memory_mb = 8192
+  cpu_kind = "performance"
+  cpus = 1
+  memory_mb = 4096
 
 [[services]]
   protocol = "tcp"
@@ -31,8 +31,11 @@ kill_timeout = 5
 [[services]]
   protocol = "tcp"
   internal_port = 8080
+  # auto_start = false: a browser hitting the status page must NOT wake the machine
+  # (otherwise an open tab + meta-refresh loops wake/stop forever). Status page only
+  # works when the machine is already awake from someone connecting to 21025.
   auto_stop_machines = "stop"
-  auto_start_machines = true
+  auto_start_machines = false
   min_machines_running = 0
   [[services.ports]]
     port = 80
@@ -44,4 +47,3 @@ kill_timeout = 5
     type = "connections"
     hard_limit = 50
     soft_limit = 40
-  # HTTP checks disabled: would keep machine awake 24/7, defeating auto-stop.
